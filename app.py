@@ -720,6 +720,8 @@ def myfiles():
     if not session.get('logged_in'): 
         return redirect('/')
     
+    filename = ""
+    
     if request.method == 'POST':
         if 'file' not in request.files:
             return redirect(request.url)
@@ -730,48 +732,19 @@ def myfiles():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             
-            # 1️⃣ SAVE FILE FIRST
+            # SAVE FILE
             os.makedirs('static/uploads', exist_ok=True)
             filepath = f'static/uploads/{filename}'
             file.save(filepath)
             
-            # 2️⃣ SAVE TO DATABASE
+            # SAVE TO DB
             conn = get_db_connection()
             conn.execute("INSERT INTO files (email, filename, filepath) VALUES (?, ?, ?)",
                         (session['email'], filename, filepath))
             conn.commit()
             conn.close()
-            
-            # 3️⃣ SHOW FILENAME + UPLOADING SCREEN
-            return f'''
-<!DOCTYPE html>
-<html><head><title>Uploading {filename}</title>
-<style>
-body{{font-family:'Segoe UI';background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}}
-.loader{{text-align:center;max-width:500px}}
-.spinner{{border:8px solid rgba(255,255,255,0.2);border-top:8px solid #ffd700;border-radius:50%;width:80px;height:80px;animation:spin 1s linear infinite;margin:0 auto 30px}}
-@keyframes spin{{0%{{transform:rotate(0deg)}}100%{{transform:rotate(360deg)}}}}
-.filename{{font-size:24px;color:#ffd700;margin:20px 0;font-weight:bold;padding:20px;background:rgba(255,215,0,0.2);border-radius:20px;border:2px solid #ffd700;word-break:break-all}}
-h1{{font-size:36px;margin:20px 0;color:#fff}}
-p{{font-size:18px;margin:10px 0}}
-.progress{{width:100%;height:25px;background:rgba(255,255,255,0.2);border-radius:15px;margin:25px 0;overflow:hidden}}
-.progress-fill{{height:100%;background:linear-gradient(90deg,#00b894,#00cec9);width:0%;animation:progress 3s ease-in-out forwards}}
-@keyframes progress{{0%{{width:0%}}50%{{width:70%}}100%{{width:100%}}}}
-.btn{{display:inline-block;padding:15px 30px;background:#f39c12;color:white;text-decoration:none;border-radius:20px;font-weight:600;margin-top:20px}}
-</style></head>
-<body>
-<div class="loader">
-    <div class="spinner"></div>
-    <div class="filename">📄 <strong>{filename}</strong></div>
-    <h1>⏳ Uploading Completed!</h1>
-    <div class="progress"><div class="progress-fill"></div></div>
-    <p>✅ File saved successfully to server</p>
-    <a href="/myfiles" class="btn">📁 View Files</a>
-</div>
-<script>setTimeout(()=>location.href='/myfiles', 4000);</script>
-</body></html>'''
     
-    # FILES LIST
+    # GET FILES
     conn = get_db_connection()
     files = conn.execute("SELECT * FROM files WHERE email=? ORDER BY id DESC", (session['email'],)).fetchall()
     conn.close()
@@ -779,81 +752,91 @@ p{{font-size:18px;margin:10px 0}}
     files_html = ""
     for f in files:
         files_html += f'''
-        <div style="background:rgba(255,255,255,0.15);padding:25px;margin:15px;border-radius:20px;display:flex;justify-content:space-between;align-items:center">
-            <div>
-                <h3 style="margin:0 0 10px 0">{f['filename']}</h3>
-                <p style="margin:0;color:#f1c40f">📁 {f['created_at']}</p>
+        <div style="background:rgba(255,255,255,0.15);padding:25px;margin:15px;border-radius:20px">
+            <div style="float:left">
+                <h3>{f['filename']}</h3>
+                <p style="color:#f1c40f">{f['created_at']}</p>
             </div>
-            <div>
-                <a href="/download/{f['id']}" style="background:#00b894;color:white;padding:12px 25px;border-radius:15px;text-decoration:none;margin-right:10px;font-weight:600">📥 Download</a>
-                <a href="/delete-file/{f['id']}" onclick="return confirm('Delete?')" style="background:#e74c3c;color:white;padding:12px 25px;border-radius:15px;text-decoration:none;font-weight:600">🗑️ Delete</a>
+            <div style="float:right">
+                <a href="/download/{f['id']}" style="background:#00b894;color:white;padding:10px 20px;border-radius:15px;text-decoration:none;margin-right:10px">📥</a>
+                <a href="/delete-file/{f['id']}" onclick="return confirm('Delete?')" style="background:#e74c3c;color:white;padding:10px 20px;border-radius:15px;text-decoration:none">🗑️</a>
             </div>
+            <div style="clear:both"></div>
         </div>
         '''
     
     return f'''
 <!DOCTYPE html>
-<html><head><title>My Files</title>
+<html>
+<head>
+<title>My Files</title>
 <style>
-*{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:'Segoe UI';background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;padding:30px}}
-.container{{max-width:1000px;margin:0 auto}}
-.upload-box{{background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);padding:50px;border-radius:30px;margin-bottom:40px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.2)}}
-.file-input-wrapper{{position:relative;margin:25px 0;display:flex;flex-direction:column}}
-#fileInput{{display:none}}
-.custom-file-label{{width:100%;padding:25px;background:rgba(255,255,255,0.2);border:3px dashed #ffd700;border-radius:25px;color:white;font-size:20px;text-align:center;cursor:pointer;transition:all 0.3s;font-weight:600}}
-.custom-file-label:hover{{background:rgba(255,215,0,0.3);border-color:#fff;transform:translateY(-2px)}}
-.file-name-display{{margin-top:15px;padding:15px;background:rgba(255,215,0,0.2);border-radius:15px;color:#ffd700;font-size:18px;font-weight:500;min-height:25px;display:flex;align-items:center;justify-content:center}}
-button{{width:100%;padding:25px;background:linear-gradient(135deg,#00b894,#00cec9);color:white;border:none;border-radius:25px;font-size:22px;font-weight:700;cursor:pointer;transition:all 0.3s;box-shadow:0 10px 30px rgba(0,184,148,0.4)}}
-button:hover{{transform:translateY(-5px);box-shadow:0 20px 40px rgba(0,184,148,0.6)}}
-button:disabled{{background:#95a5a6;cursor:not-allowed;transform:none}}
-h1{{font-size:45px;margin-bottom:20px;text-align:center;text-shadow:0 2px 10px rgba(0,0,0,0.3)}}
-.files-section{{background:rgba(255,255,255,0.1);padding:40px;border-radius:30px;box-shadow:0 15px 40px rgba(0,0,0,0.2)}}
-.files-section h2{{text-align:center;font-size:32px;margin-bottom:30px;color:#ffd700;text-shadow:0 2px 10px rgba(0,0,0,0.3)}}
-.info{{background:rgba(255,255,255,0.2);padding:20px;border-radius:20px;margin:20px 0;color:#ffd700;text-align:center;font-size:16px}}
-</style></head>
+.container{{max-width:900px;margin:auto}}
+.upload-box{{background:rgba(255,255,255,0.2);padding:40px;border-radius:25px;margin-bottom:30px;text-align:center}}
+h1{{font-size:40px;margin-bottom:20px}}
+.custom-file-upload {{
+    display: inline-block;
+    padding: 20px 40px;
+    background: linear-gradient(135deg,#00b894,#00cec9);
+    color: white;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 20px;
+    font-weight: bold;
+    transition: all 0.3s;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0,184,148,0.4);
+}}
+.custom-file-upload:hover {{transform: translateY(-3px); box-shadow: 0 15px 40px rgba(0,184,148,0.6);}}
+#fileName{{margin: 20px 0; padding: 15px; background: rgba(255,215,0,0.3); border-radius: 15px; font-size: 18px; color: #ffd700; font-weight: bold; min-height: 25px; display: flex; align-items: center; justify-content: center;}}
+#uploadBtn{{width:100%;padding:20px;margin-top:20px;background:linear-gradient(135deg,#f39c12,#e67e22);color:white;border:none;border-radius:25px;font-size:22px;font-weight:bold;cursor:pointer}}
+#uploadBtn:hover{{transform:translateY(-3px)}}
+.files-section{{background:rgba(255,255,255,0.1);padding:30px;border-radius:25px}}
+.files-section h2{{text-align:center;font-size:28px;margin-bottom:30px;color:#ffd700}}
+</style>
+</head>
 <body>
 <div class="container">
     <div class="upload-box">
-        <h1>📁 File Manager</h1>
-        <div class="info">👆 Choose file → See filename → Click Upload → See uploading screen</div>
-        
+        <h1>📁 File Upload</h1>
         <form method="POST" enctype="multipart/form-data" id="uploadForm">
-            <div class="file-input-wrapper">
-                <input type="file" name="file" accept=".pdf,.txt" id="fileInput" required>
-                <label for="fileInput" class="custom-file-label">📎 Click to Choose PDF/TXT File</label>
-                <div class="file-name-display" id="fileNameDisplay">No file selected</div>
+            <div style="position:relative">
+                <input type="file" name="file" id="fileInput" accept=".pdf,.txt" style="display:none" required>
+                <label for="fileInput" class="custom-file-upload">📎 Choose File</label>
+                <div id="fileName">No file selected</div>
             </div>
-            <button type="submit" id="uploadBtn">🚀 Upload Selected File</button>
+            <button type="submit" id="uploadBtn">🚀 Upload File</button>
         </form>
+        
+        {"✅ " + filename + " uploaded successfully!" if filename else ""}
     </div>
     
     <div class="files-section">
         <h2>📋 Your Files ({len(files)})</h2>
-        {files_html or '<p style="text-align:center;color:#f1c40f;font-size:24px;padding:50px;font-weight:500">No files uploaded yet. Upload your first file above! 🎯</p>'}
+        {files_html or '<p style="text-align:center;color:#f1c40f;font-size:20px;padding:40px">No files uploaded. Upload your first file! 🎯</p>'}
     </div>
     
-    <a href="/dashboard" style="display:block;margin:40px auto;text-align:center;padding:20px 50px;background:linear-gradient(135deg,#f39c12,#e67e22);color:white;text-decoration:none;border-radius:25px;font-weight:700;font-size:20px;width:max-content;box-shadow:0 15px 35px rgba(243,156,18,0.4)">🏠 Back to Dashboard</a>
+    <a href="/dashboard" style="display:block;margin:40px auto;padding:15px 40px;background:#f39c12;color:white;text-decoration:none;border-radius:20px;text-align:center;font-weight:bold;width:200px">← Dashboard</a>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {{
-    const fileInput = document.getElementById('fileInput');
-    const fileNameDisplay = document.getElementById('fileNameDisplay');
-    const customLabel = document.querySelector('.custom-file-label');
-    const uploadBtn = document.getElementById('uploadBtn');
-    
-    fileInput.addEventListener('change', function(e) {{
-        const fileName = e.target.files[0]?.name || 'No file selected';
-        fileNameDisplay.textContent = fileName;
-        fileNameDisplay.style.background = 'rgba(0,184,148,0.3)';
-        customLabel.textContent = '📎 Change File';
-        uploadBtn.style.background = 'linear-gradient(135deg,#27ae60,#2ecc71)';
-    }});
-}});
+document.getElementById('fileInput').onchange = function() {{
+    var fileName = this.files[0].name;
+    document.getElementById('fileName').innerHTML = "📄 " + fileName;
+}}
+
+document.getElementById('uploadForm').onsubmit = function() {{
+    var fileName = document.getElementById('fileInput').files[0].name;
+    document.getElementById('fileName').innerHTML = "⏳ Uploading " + fileName + "...";
+    document.querySelector('.custom-file-upload').style.display = 'none';
+    document.getElementById('uploadBtn').innerHTML = '⏳ Please Wait...';
+    document.getElementById('uploadBtn').disabled = true;
+}}
 </script>
 {GLOBAL_ALARM_JS}
-</body></html>'''
+</body>
+</html>'''
     
 @app.route('/delete/<subject>/<filename>')
 def delete(subject, filename):
