@@ -709,44 +709,104 @@ def view_pdf(subject, filename):
     </body></html>
     '''
 # ===== MY FILES PAGE (COMPLETE VERSION) =====
-@app.route('/myfiles')
-def myfiles_page():  # Function name change pannirukken
-    if not session.get('logged_in'): 
-        return redirect('/')
+@app.route('/myfiles', methods=['GET', 'POST'])
+def myfiles():
+    if not session.get('logged_in'): return redirect('/')
     
-    files_html = ''
-    upload_base = 'static/uploads'
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            return redirect(request.url)
+        
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            
+            conn = get_db_connection()
+            conn.execute("INSERT INTO files (email, filename, filepath) VALUES (?, ?, ?)",
+                        (session['email'], filename, filepath))
+            conn.commit()
+            conn.close()
+            
+            return f'''
+            <!DOCTYPE html>
+            <html><head><title>Uploading...</title>
+            <style>
+            body{{font-family:'Segoe UI';background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;display:flex;align-items:center;justify-content:center}}
+            .loader{{text-align:center}}
+            .spinner{{border:8px solid rgba(255,255,255,0.2);border-top:8px solid #ffd700;border-radius:50%;width:80px;height:80px;animation:spin 1s linear infinite;margin:0 auto 30px}}
+            @keyframes spin{{0%{{transform:rotate(0deg)}}100%{{transform:rotate(360deg)}}}}
+            h1{{font-size:32px;margin-bottom:20px}}
+            p{{font-size:20px}}
+            </style></head>
+            <body>
+            <div class="loader">
+                <div class="spinner"></div>
+                <h1>📤 Uploading {filename}...</h1>
+                <p>Please wait, processing your file!</p>
+                <script>
+                    setTimeout(function(){{window.location.href='/myfiles';}}, 2000);
+                </script>
+            </div>
+            </body></html>'''
     
-    if os.path.exists(upload_base):
-        for subject in os.listdir(upload_base):
-            subject_path = os.path.join(upload_base, subject)
-            if os.path.isdir(subject_path):
-                for filename in os.listdir(subject_path):
-                    if filename.endswith('.pdf'):
-                        files_html += f'''
-                        <div style="background:rgba(255,255,255,0.2);padding:25px;margin:20px;border-radius:20px">
-                            <h3>{subject.replace('-',' ').title()} → {filename}</h3>
-                            <div>
-                                <a href="/view-pdf/{subject}/{filename}" target="_blank" style="padding:10px 20px;background:#27ae60;color:white;text-decoration:none;border-radius:10px;margin-right:10px">👀 View</a>
-                                <a href="/download/{subject}/{filename}" style="padding:10px 20px;background:#3498db;color:white;text-decoration:none;border-radius:10px;margin-right:10px">📥 Download</a>
-                                <a href="/delete/{subject}/{filename}" onclick="return confirm('Delete {filename}?')" style="padding:10px 20px;background:#e74c3c;color:white;text-decoration:none;border-radius:10px">🗑️ Delete</a>
-                            </div>
-                        </div>
-                        '''
+    conn = get_db_connection()
+    files = conn.execute("SELECT * FROM files WHERE email=? ORDER BY id DESC", (session['email'],)).fetchall()
+    conn.close()
+    
+    files_html = ""
+    for f in files:
+        files_html += f'''
+        <div style="background:rgba(255,255,255,0.15);padding:25px;margin:15px;border-radius:20px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <h3 style="margin:0 0 10px 0">{f['filename']}</h3>
+                <p style="margin:0;color:#f1c40f">📁 Uploaded: {f['created_at']}</p>
+            </div>
+            <div>
+                <a href="/download/{f['id']}" style="background:#00b894;color:white;padding:12px 25px;border-radius:15px;text-decoration:none;margin-right:10px;font-weight:600">📥 Download</a>
+                <a href="/delete-file/{f['id']}" onclick="return confirm('Delete?')" style="background:#e74c3c;color:white;padding:12px 25px;border-radius:15px;text-decoration:none;font-weight:600">🗑️ Delete</a>
+            </div>
+        </div>
+        '''
     
     return f'''
-    <!DOCTYPE html>
-    <html><head><title>My Files</title>
-    <style>*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;padding:30px}}.container{{max-width:1000px;margin:0 auto}}.back-btn{{position:fixed;top:20px;left:20px;padding:15px 25px;background:#f39c12;color:white;text-decoration:none;border-radius:15px;font-weight:600}}</style></head>
-    <body>
-    <a href="/dashboard" class="back-btn">← Dashboard</a>
-    <div class="container">
-        <h1 style="text-align:center;font-size:42px;margin:80px 0 40px">📁 My Files</h1>
-        {files_html or "<p style='text-align:center;font-size:28px;color:#f1c40f'>No files uploaded yet!</p>"}
+<!DOCTYPE html>
+<html><head><title>My Files</title>
+<style>
+body{{font-family:'Segoe UI';background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;padding:50px}}
+.container{{max-width:900px;margin:0 auto}}
+.upload-box{{background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);padding:50px;border-radius:30px;margin-bottom:50px;text-align:center}}
+input[type=file]{{width:100%;padding:20px;background:rgba(255,255,255,0.2);border:none;border-radius:20px;color:white;font-size:18px;margin:20px 0}}
+button{{width:100%;padding:20px;background:linear-gradient(135deg,#00b894,#00cec9);color:white;border:none;border-radius:20px;font-size:20px;font-weight:700;cursor:pointer}}
+h1{{font-size:40px;margin-bottom:30px;text-align:center}}
+.files-section{{background:rgba(255,255,255,0.1);padding:40px;border-radius:25px}}
+.files-section h2{{text-align:center;font-size:28px;margin-bottom:30px;color:#ffd700}}
+.no-files{{text-align:center;padding:60px;color:#f1c40f;font-size:24px}}
+</style></head>
+<body>
+<div class="container">
+    <div class="upload-box">
+        <h1>📁 Upload PDF Files</h1>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".pdf" required>
+            <button type="submit">🚀 Upload PDF</button>
+        </form>
     </div>
-    {GLOBAL_ALARM_JS}
-    </body></html>
-    '''
+    
+    <div class="files-section">
+        <h2>Your Uploaded Files:</h2>
+        {files_html or '<div class="no-files">📭 No files uploaded yet!<br><small>Upload your first PDF above 👆</small></div>'}
+    </div>
+    
+    <div style="text-align:center;margin-top:40px">
+        <a href="/dashboard" style="padding:18px 40px;background:#f39c12;color:white;text-decoration:none;border-radius:20px;font-size:20px;font-weight:700">← Back to Dashboard</a>
+    </div>
+</div>
+{GLOBAL_ALARM_JS}
+</body></html>'''
     
 @app.route('/delete/<subject>/<filename>')
 def delete(subject, filename):
