@@ -102,7 +102,7 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS goals 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, 
                   email TEXT, subject TEXT, goal TEXT, 
-                  progress INTEGER DEFAULT 0,
+                  target_score INTEGER, progress INTEGER DEFAULT 0,
                   max_score INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS reminders 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
