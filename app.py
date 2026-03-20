@@ -730,18 +730,41 @@ def myfiles():
         
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            os.makedirs('static/uploads', exist_ok=True)
-            filepath = f'static/uploads/{filename}'
-            file.save(filepath)
             
-            conn = get_db_connection()
-            conn.execute("INSERT INTO files (email, filename, filepath) VALUES (?, ?, ?)",
-                        (session['email'], filename, filepath))
-            conn.commit()
-            conn.close()
-            
-            success_msg = f"✅ {filename} uploaded successfully!"
+            # UPLOADING SCREEN WITH FILENAME
+            return f'''
+<!DOCTYPE html>
+<html>
+<head><title>Uploading {filename}</title>
+<style>
+body{{background:linear-gradient(135deg,#667eea,#764ba2);color:white;font-family:'Segoe UI';min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}}
+.loader{{text-align:center;background:rgba(255,255,255,0.1);padding:50px;border-radius:30px}}
+h1{{font-size:40px;margin-bottom:20px}}
+.filename{{font-size:28px;color:#ffd700;padding:20px;background:rgba(255,215,0,0.3);border-radius:20px;margin:20px 0;border:2px solid #ffd700}}
+.progress{{width:400px;height:20px;background:rgba(255,255,255,0.3);border-radius:10px;margin:30px auto;overflow:hidden}}
+.progress-bar{{height:100%;background:linear-gradient(90deg,#00b894,#00cec9);width:0%;animation:progress 4s ease-out forwards;border-radius:10px}}
+@keyframes progress{{0%{{width:0%}}80%{{width:95%}}100%{{width:100%}}}}
+.spinner{{border:6px solid rgba(255,255,255,0.3);border-top:6px solid #ffd700;border-radius:50%;width:60px;height:60px;animation:spin 1s linear infinite;margin:0 auto 20px}}
+@keyframes spin{{0%{{transform:rotate(0deg)}}100%{{transform:rotate(360deg)}}}}
+</style>
+</head>
+<body>
+<div class="loader">
+    <div class="spinner"></div>
+    <h1>⏳ Uploading...</h1>
+    <div class="filename">📄 <strong>{filename}</strong></div>
+    <div class="progress"><div class="progress-bar"></div></div>
+    <p style="font-size:18px">Please wait, file is being processed...</p>
+</div>
+<script>setTimeout(()=>location.href='/myfiles?success={filename}', 4500);</script>
+</body>
+</html>'''
     
+    # File save success page
+    if request.args.get('success'):
+        success_msg = f"✅ {request.args.get('success')} uploaded successfully!"
+    
+    # Get files list
     conn = get_db_connection()
     files = conn.execute("SELECT * FROM files WHERE email=? ORDER BY id DESC", (session['email'],)).fetchall()
     conn.close()
@@ -771,90 +794,51 @@ body{{font-family:'Segoe UI';background:linear-gradient(135deg,#667eea,#764ba2);
 .container{{max-width:900px;margin:auto}}
 .upload-box{{background:rgba(255,255,255,0.2);padding:40px;border-radius:25px;text-align:center}}
 h1{{font-size:40px;margin-bottom:20px}}
-.file-choose-btn {{
-    display: inline-block;
-    padding: 25px 50px;
-    background: linear-gradient(135deg, #00b894, #00cec9);
-    color: white;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 22px;
-    font-weight: bold;
-    border: none;
-    box-shadow: 0 10px 30px rgba(0,184,148,0.4);
-    transition: all 0.3s;
+.file-btn {{
+    display:inline-block;padding:25px 50px;background:linear-gradient(135deg,#00b894,#00cec9);color:white;border-radius:25px;cursor:pointer;font-size:22px;font-weight:bold;border:none;box-shadow:0 10px 30px rgba(0,184,148,0.4);transition:all 0.3s
 }}
-.file-choose-btn:hover {{transform: translateY(-3px); box-shadow: 0 15px 40px rgba(0,184,148,0.6);}}
-#fileName {{
-    margin: 20px 0;
-    padding: 20px;
-    background: rgba(255,215,0,0.3);
-    border-radius: 20px;
-    font-size: 20px;
-    color: #ffd700;
-    font-weight: bold;
-    min-height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #ffd700;
-}}
-#uploadBtn {{
-    width: 100%;
-    padding: 25px;
-    margin-top: 20px;
-    background: linear-gradient(135deg, #f39c12, #e67e22);
-    color: white;
-    border: none;
-    border-radius: 25px;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-}}
-#uploadBtn:hover {{transform: translateY(-3px);}}
-.files-section {{background: rgba(255,255,255,0.1); padding: 30px; border-radius: 25px; margin-top: 30px;}}
-.files-section h2 {{text-align: center; font-size: 28px; margin-bottom: 30px; color: #ffd700;}}
-.success-msg {{background: rgba(0,184,148,0.3); padding: 20px; border-radius: 15px; margin: 20px 0; color: #00b894; font-weight: bold; font-size: 18px;}}
+.file-btn:hover{{transform:translateY(-3px);box-shadow:0 15px 40px rgba(0,184,148,0.6)}}
+#fileName{{margin:20px 0;padding:20px;background:rgba(255,215,0,0.3);border-radius:20px;font-size:20px;color:#ffd700;font-weight:bold;border:2px solid #ffd700;min-height:30px}}
+#uploadBtn{{width:100%;padding:25px;margin-top:20px;background:linear-gradient(135deg,#f39c12,#e67e22);color:white;border:none;border-radius:25px;font-size:24px;font-weight:bold;cursor:pointer}}
+.success-msg{{background:rgba(0,184,148,0.3);padding:25px;border-radius:20px;margin:20px 0;color:#00b894;font-weight:bold;font-size:20px;border-left:5px solid #00b894}}
+.files-section{{background:rgba(255,255,255,0.1);padding:30px;border-radius:25px;margin-top:30px}}
 </style>
 </head>
 <body>
 <div class="container">
     <div class="upload-box">
         <h1>📁 File Upload</h1>
-        
         {f'<div class="success-msg">{success_msg}</div>' if success_msg else ''}
         
-        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        <form method="POST" enctype="multipart/form-data">
             <input type="file" name="file" id="fileInput" accept=".pdf,.txt" style="display:none" required>
-            <label for="fileInput" class="file-choose-btn">📎 Choose File</label>
+            <label for="fileInput" class="file-btn">📎 Choose File</label>
             <div id="fileName">No file selected</div>
             <button type="submit" id="uploadBtn">🚀 Upload File</button>
         </form>
     </div>
     
     <div class="files-section">
-        <h2>📋 Your Files ({len(files)})</h2>
-        {files_html or '<p style="text-align:center;color:#f1c40f;font-size:20px;padding:40px">No files. Upload first file! 🎯</p>'}
+        <h2 style="text-align:center;font-size:28px;margin-bottom:30px;color:#ffd700">📋 Your Files ({len(files)})</h2>
+        {files_html or '<p style="text-align:center;color:#f1c40f;font-size:20px;padding:40px">No files uploaded yet!</p>'}
     </div>
     
     <a href="/dashboard" style="display:block;margin:40px auto;padding:15px 40px;background:#f39c12;color:white;text-decoration:none;border-radius:20px;text-align:center;font-weight:bold;width:200px">← Dashboard</a>
 </div>
 
 <script>
-document.getElementById('fileInput').addEventListener('change', function() {{
-    var fileName = this.files[0].name;
-    document.getElementById('fileName').innerHTML = '📄 ' + fileName;
-    document.querySelector('.file-choose-btn').innerHTML = '📎 Change File';
-}});
+document.getElementById('fileInput').onchange = function() {{
+    document.getElementById('fileName').innerHTML = '📄 ' + this.files[0].name;
+    document.querySelector('.file-btn').innerHTML = '📎 Change File';
+}}
 
-document.getElementById('uploadForm').addEventListener('submit', function() {{
+document.querySelector('form').onsubmit = function() {{
     var fileName = document.getElementById('fileInput').files[0].name;
     document.getElementById('fileName').innerHTML = '⏳ Uploading ' + fileName + '...';
-    document.getElementById('uploadBtn').innerHTML = '⏳ Please Wait...';
+    document.getElementById('uploadBtn').innerHTML = '⏳ Processing...';
     document.getElementById('uploadBtn').disabled = true;
-}});
+}};
 </script>
-
 {GLOBAL_ALARM_JS}
 </body>
 </html>'''
