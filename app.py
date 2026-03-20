@@ -1291,7 +1291,8 @@ def myfiles():
 
 @app.route('/delete-goal/<int:goal_id>')
 def delete_goal(goal_id):
-    if not session.get('logged_in'): return redirect('/')
+    if not session.get('logged_in'): 
+        return redirect('/')
     conn = get_db_connection()
     conn.execute('DELETE FROM goals WHERE id=? AND email=?', (goal_id, session['email']))
     conn.commit()
@@ -1299,7 +1300,7 @@ def delete_goal(goal_id):
     return redirect('/view-goals')
 
 @app.route('/delete_goal/<int:goal_id>')
-def delete_goal_alt(goal_id):  # Backup route
+def delete_goal_alt(goal_id):
     return delete_goal(goal_id)
 
 # ONE TIME RUN - Add missing columns
