@@ -110,10 +110,12 @@ def init_db():
                   title TEXT, 
                   deadline TEXT,
                   triggered INTEGER DEFAULT 0)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS files 
+    c.execute('''CREATE TABLE IF NOT EXISTS files
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  email TEXT, subject TEXT, filename TEXT, 
-                  upload_date TEXT)''')
+                  email TEXT NOT NULL,
+                  filename TEXT NOT NULL, 
+                  filepath TEXT NOT NULL,
+                  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)''') 
     conn.commit()
     conn.close()
 
@@ -1320,21 +1322,6 @@ def view_goals():
     </div>
     {GLOBAL_ALARM_JS}
     </body></html>
-    '''
-    
-@app.route('/myfiles')
-def myfiles():
-    if not session.get('logged_in'): return redirect('/')
-    # List all uploaded files (implementation similar to above)
-    return '''
-    <!DOCTYPE html><html><head><title>My Files</title>
-    <style>body{background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;padding:30px;font-family:'Segoe UI'}
-    .container{max-width:1000px;margin:0 auto}</style></head>
-    <body><div class="container">
-    <h1 style="text-align:center;font-size:42px;margin:80px 0 40px">📁 My Files</h1>
-    <p style="text-align:center;font-size:24px">File upload working! Check subjects to upload.</p>
-    <a href="/dashboard" style="display:block;text-align:center;margin:50px 0;padding:20px 50px;background:#f39c12;color:white;text-decoration:none;border-radius:20px;font-size:24px;width:300px;margin:50px auto">← Dashboard</a>
-    </div></body></html>
     '''
     
 @app.route('/delete_goal/<int:id>')
