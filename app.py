@@ -49,7 +49,7 @@ if(window.alarmRunning){
         
         // RED OVERLAY - EVERYWHERE SAME
         const overlay = document.createElement('div');
-        overlay.innerHTML = `🚨 ${title.toUpperCase()} 🚨<br><small>Click pannunga</small>`;
+        overlay.innerHTML = `🚨 ${title.toUpperCase()} 🚨<br>`;
         overlay.style.cssText = `
             position:fixed;top:0;left:0;width:100vw;height:100vh;
             background:rgba(255,0,0,0.9);z-index:1000000;
@@ -102,7 +102,7 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS goals 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, 
                   email TEXT, subject TEXT, goal TEXT, 
-                  target_score INTEGER, progress INTEGER DEFAULT 0,
+                  progress INTEGER DEFAULT 0,
                   max_score INTEGER DEFAULT 0)''')
     c.execute('''CREATE TABLE IF NOT EXISTS reminders 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -303,8 +303,7 @@ def render_login_page(error=""):
     
 @app.route('/dashboard')
 def dashboard():
-    if not session.get('logged_in'): 
-        return redirect('/')
+    if not session.get('logged_in'): return redirect('/')
     
     email = session['email']
     conn = get_db_connection()
@@ -312,34 +311,58 @@ def dashboard():
     conn.close()
     
     notifications = ""
-    for r in reminders[:5]:  # Show top 5
+    for r in reminders[:3]:
         notifications += f'''
-        <div class="notification" style="background:rgba(231,76,60,0.95);padding:25px;border-radius:20px;margin:20px auto;max-width:600px;box-shadow:0 15px 40px rgba(231,76,60,0.5);cursor:pointer">
-            <div style="font-size:28px">⏰ {r["title"]}</div>
-            <div style="font-size:20px;color:#ffd700">{r["deadline"]}</div>
+        <div style="background:linear-gradient(135deg,#4a5568,#2d3748);padding:25px;border-radius:20px;margin:20px auto;max-width:500px;box-shadow:0 15px 40px rgba(74,85,104,0.4);border-left:5px solid #ed8936">
+            <div style="font-size:26px;font-weight:bold;color:#f7fafc">⏰ {r['title']}</div>
+            <div style="font-size:18px;color:#ed8936;margin-top:8px">{r['deadline']}</div>
         </div>
         '''
     
     return f'''
 <!DOCTYPE html>
 <html><head><title>Dashboard</title>
-<style>*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:'Segoe UI';background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;padding:30px}}.container{{max-width:900px;margin:0 auto;text-align:center}}.btn{{display:inline-block;padding:22px 40px;margin:10px;background:linear-gradient(135deg,#f093fb,#f5576c);color:white;text-decoration:none;border-radius:20px;font-size:20px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,0.3);transition:all 0.3s}}.btn:hover{{transform:translateY(-5px);box-shadow:0 20px 40px rgba(0,0,0,0.4)}}</style></head>
+<style>
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{font-family:'Segoe UI',sans-serif;background:#fef5e7;background-image:radial-gradient(#f6ad55 1px, transparent 1px);background-size:50px 50px;background-position:0 0,25px 25px;color:#2d3748;min-height:100vh;padding:40px;position:relative}}
+body::before{{content:'';position:fixed;top:0;left:0;right:0;bottom:0;background:linear-gradient(135deg,rgba(254,245,231,0.8) 0%,rgba(248,250,252,0.9) 100%);z-index:1}}
+.container{{max-width:1000px;margin:0 auto;text-align:center;position:relative;z-index:2}}
+h1{{font-size:48px;margin-bottom:20px;color:#2d3748;font-weight:800;letter-spacing:2px;text-shadow:2px 2px 4px rgba(0,0,0,0.1)}}
+h2{{font-size:24px;margin-bottom:50px;color:#4a5568;font-weight:500;letter-spacing:1px}}
+.btn-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:30px;margin:60px 0;padding:50px 40px;background:rgba(255,255,255,0.6);backdrop-filter:blur(20px);border-radius:30px;box-shadow:0 20px 60px rgba(0,0,0,0.1);border:1px solid rgba(255,255,255,0.8)}}
+.btn{{display:block;padding:25px 30px;background:#4299e1;color:white;text-decoration:none;border-radius:20px;font-size:20px;font-weight:700;box-shadow:0 10px 30px rgba(66,153,225,0.4);transition:all 0.3s ease;text-transform:uppercase;letter-spacing:1px;border:none;cursor:pointer;position:relative;overflow:hidden}}
+.btn:nth-child(2){{background:#48bb78}}
+.btn:nth-child(3){{background:#ed8936}}
+.btn:nth-child(4){{background:#f56565}}
+.btn:nth-child(5){{background:#9f7aea}}
+.btn:nth-child(6){{background:#f56565}}
+.btn:hover{{transform:translateY(-8px);box-shadow:0 20px 50px rgba(0,0,0,0.3)}}
+.btn-grid::before{{content:"Your Study Control Panel";position:absolute;top:-15px;left:50%;transform:translateX(-50%);background:#4299e1;color:white;padding:10px 30px;border-radius:25px;font-size:16px;font-weight:700;letter-spacing:1px}}
+.study-elements{{position:fixed;top:20px;right:20px;z-index:3;opacity:0.1}}
+.study-elements div{{font-size:60px;margin:20px;animation:float 6s ease-in-out infinite}}
+@keyframes float{{0%,100%{{transform:translateY(0)}}50%{{transform:translateY(-15px)}}}}
+</style></head>
 <body>
-<div class="container">
-    <h1 style="font-size:42px;margin-bottom:20px">🎓 Welcome {session.get("name", "User")}!</h1>
-    <h2 style="font-size:24px;margin-bottom:30px">Study Planner Dashboard</h2>
-    {notifications}
-    <div style="margin:40px 0">
-        <a href="/study" class="btn">📚 Study Dashboard</a>
-        <a href="/goals" class="btn">🎯 Set Goals</a>
-        <a href="/view-goals" class="btn">📊 View Goals</a>
-        <a href="/reminders" class="btn">⏰ Reminders</a>
-        <a href="/logout" class="btn" style="background:linear-gradient(135deg,#e74c3c,#c0392b)">🚪 Logout</a>
+    <div class="study-elements">
+        <div>📚</div><div>✏️</div><div>📖</div><div>🎓</div>
     </div>
-</div>
-{GLOBAL_ALARM_JS}
-</body></html>
-'''
+    
+    <div class="container">
+        <h1>🎯 Welcome {session.get("name", "User")}</h1>
+        <h2>Choose what to do next</h2>
+        
+        {notifications}
+        
+        <div class="btn-grid">
+            <a href="/study" class="btn">📚 Study Materials</a>
+            <a href="/goals" class="btn">🎯 Set Goals</a>
+            <a href="/view-goals" class="btn">📊 Track Progress</a>
+            <a href="/reminders" class="btn">⏰ Reminders</a>
+            <a href="/logout" class="btn">🚪 Logout</a>
+        </div>
+    </div>
+    {GLOBAL_ALARM_JS}
+</body></html>'''
 
 @app.route('/api/user-alarms')
 def user_alarms():
@@ -778,7 +801,7 @@ def goals():
     {GLOBAL_ALARM_JS}
     </body></html>
     '''
-
+    
 @app.route('/quiz/<int:goal_id>', methods=['GET', 'POST'])
 def quiz(goal_id):
     if not session.get('logged_in'): 
