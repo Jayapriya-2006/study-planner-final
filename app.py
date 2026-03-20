@@ -747,8 +747,8 @@ def myfiles():
             <body>
             <div class="loader">
                 <div class="spinner"></div>
-                <h1>✅ {filename} Uploaded!</h1>
-                <p>Redirecting to files...</p>
+                <h1>✅ File Uploaded!</h1>
+                <p>Redirecting...</p>
                 <script>setTimeout(()=>location.href='/myfiles', 1500);</script>
             </div>
             </body></html>'''
@@ -779,16 +779,7 @@ def myfiles():
 body{{font-family:'Segoe UI';background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;padding:50px}}
 .container{{max-width:900px;margin:0 auto}}
 .upload-box{{background:rgba(255,255,255,0.15);backdrop-filter:blur(20px);padding:50px;border-radius:30px;margin-bottom:50px;text-align:center}}
-.file-input-wrapper{{position:relative;display:flex;flex-direction:column;margin:20px 0}}
-input[type=file]{{display:none}}
-.custom-file-label{{width:100%;padding:20px;background:rgba(255,255,255,0.2);border:2px dashed #ffd700;border-radius:20px;color:white;font-size:18px;text-align:center;cursor:pointer;transition:all 0.3s}}
-.custom-file-label:hover{{background:rgba(255,215,0,0.2);border-color:#fff}}
-.file-name{{margin-top:10px;font-size:16px;color:#ffd700;text-align:center;min-height:20px}}
-.progress-container{{background:rgba(255,255,255,0.1);padding:20px;border-radius:15px}}
-.progress-info{{display:flex;align-items:center;gap:15px}}
-.progress-bar{{flex:1;height:10px;background:rgba(255,255,255,0.2);border-radius:10px;overflow:hidden}}
-.progress-fill{{height:100%;background:linear-gradient(90deg,#00b894,#00cec9);width:0%;border-radius:10px;transition:width 0.3s ease}}
-#currentFileName{{color:#ffd700}}
+input[type=file]{{width:100%;padding:20px;background:rgba(255,255,255,0.2);border:none;border-radius:20px;color:white;font-size:18px;margin:20px 0}}
 button{{width:100%;padding:20px;background:linear-gradient(135deg,#00b894,#00cec9);color:white;border:none;border-radius:20px;font-size:20px;font-weight:700;cursor:pointer}}
 h1{{font-size:40px;margin-bottom:30px;text-align:center}}
 .files-section{{background:rgba(255,255,255,0.1);padding:40px;border-radius:25px}}
@@ -798,24 +789,10 @@ h1{{font-size:40px;margin-bottom:30px;text-align:center}}
 <div class="container">
     <div class="upload-box">
         <h1>📁 Upload PDF Files</h1>
-        <form method="POST" enctype="multipart/form-data" id="uploadForm">
-            <div class="file-input-wrapper">
-                <input type="file" name="file" accept=".pdf" required id="fileInput">
-                <label for="fileInput" class="custom-file-label">📎 Choose File...</label>
-                <span class="file-name" id="fileNameDisplay"></span>
-            </div>
-            <button type="submit" id="uploadBtn">🚀 Upload PDF</button>
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="file" accept=".pdf" required>
+            <button type="submit">🚀 Upload PDF</button>
         </form>
-        
-        <div id="progressContainer" class="progress-container" style="display:none; margin-top:20px;">
-            <div class="progress-info">
-                <span id="uploadingText">Uploading <strong id="currentFileName"></strong>...</span>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progressFill"></div>
-                </div>
-                <span id="progressPercent">0%</span>
-            </div>
-        </div>
     </div>
     
     <div class="files-section">
@@ -825,47 +802,6 @@ h1{{font-size:40px;margin-bottom:30px;text-align:center}}
     
     <a href="/dashboard" style="display:block;margin:40px auto 0;padding:15px 30px;background:#f39c12;color:white;text-decoration:none;border-radius:20px;text-align:center;font-weight:600;width:max-content">← Back to Dashboard</a>
 </div>
-
-<script>
-document.addEventListener('DOMContentLoaded',function(){
-    const fileInput=document.getElementById('fileInput'),
-    fileNameDisplay=document.getElementById('fileNameDisplay'),
-    customLabel=document.querySelector('.custom-file-label'),
-    uploadForm=document.getElementById('uploadForm'),
-    uploadBtn=document.getElementById('uploadBtn'),
-    progressContainer=document.getElementById('progressContainer'),
-    progressFill=document.getElementById('progressFill'),
-    progressPercent=document.getElementById('progressPercent'),
-    currentFileName=document.getElementById('currentFileName');
-    
-    fileInput.addEventListener('change',function(e){
-        const fileName=e.target.files[0]?.name||'Choose File...';
-        fileNameDisplay.textContent=fileName;
-        customLabel.textContent='📎 Change File'
-    });
-    
-    uploadForm.addEventListener('submit',function(e){
-        const file=fileInput.files[0];
-        if(!file)return;
-        e.preventDefault();
-        progressContainer.style.display='block';
-        uploadBtn.disabled=true;
-        uploadBtn.textContent='⏳ Uploading...';
-        currentFileName.textContent=file.name;
-        let progress=0;
-        const interval=setInterval(()=>{
-            progress+=15*Math.random();
-            if(progress>90)progress=90;
-            progressFill.style.width=progress+'%';
-            progressPercent.textContent=Math.round(progress)+'%'
-        },200);
-        setTimeout(()=>{
-            clearInterval(interval);
-            uploadForm.submit()
-        },1500)
-    })
-});
-</script>
 {GLOBAL_ALARM_JS}
 </body></html>'''
     
