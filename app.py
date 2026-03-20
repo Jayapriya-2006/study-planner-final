@@ -760,7 +760,6 @@ def download(subject, filename):
     if not session.get('logged_in'): return redirect('/')
     return send_from_directory(f'static/uploads/{subject}', filename, as_attachment=True)
 
-
 @app.route('/goals', methods=['GET', 'POST'])
 def goals():
     if not session.get('logged_in'): 
@@ -801,7 +800,7 @@ def goals():
     {GLOBAL_ALARM_JS}
     </body></html>
     '''
-    
+
 @app.route('/quiz/<int:goal_id>', methods=['GET', 'POST'])
 def quiz(goal_id):
     if not session.get('logged_in'): 
