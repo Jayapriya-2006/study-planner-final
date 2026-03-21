@@ -699,7 +699,6 @@ def upload(subject, unit):
     #uploadBtn{{width:100%;padding:20px;background:#28a745;color:white;border:none;border-radius:15px;font-size:20px;font-weight:600;cursor:pointer;margin-top:10px}}
     #uploadBtn:disabled{{background:#ccc;color:#666;cursor:not-allowed}}
     #filename{{margin:15px 0;padding:15px;background:#ffd700;color:#333;border-radius:12px;font-weight:bold;display:none}}
-    #uploadingMsg{{display:none;margin:20px 0;padding:20px;background:#ffc107;color:#856404;border-radius:15px;font-size:18px;font-weight:bold;text-align:center}}
     </style>
     </head>
     <body>
@@ -708,7 +707,6 @@ def upload(subject, unit):
         <form method="POST" enctype="multipart/form-data" id="uploadForm">
             <input type="file" name="file" id="fileInput" accept=".pdf" required>
             <div id="filename"></div>
-            <div id="uploadingMsg">⏳ <strong>Uploading...</strong> Please wait</div>
             <button type="submit" id="uploadBtn" disabled>Upload PDF</button>
         </form>
         <a href="/subject/{subject}" style="display:inline-block;margin-top:20px;color:#f1c40f;font-size:18px">← Back to {subject.replace('-', ' ').title()}</a>
@@ -717,26 +715,27 @@ def upload(subject, unit):
     var fileInput = document.getElementById("fileInput");
     var uploadBtn = document.getElementById("uploadBtn");
     var filenameDiv = document.getElementById("filename");
-    var uploadingMsg = document.getElementById("uploadingMsg");
     
     fileInput.onchange = function() {{
         if(this.files[0]) {{
             filenameDiv.innerHTML = "📄 Selected: <strong>" + this.files[0].name + "</strong>";
             filenameDiv.style.display = "block";
             uploadBtn.disabled = false;
+            uploadBtn.innerHTML = "Upload PDF";
             uploadBtn.style.background = "#28a745";
         }} else {{
             filenameDiv.style.display = "none";
             uploadBtn.disabled = true;
+            uploadBtn.innerHTML = "Upload PDF";
             uploadBtn.style.background = "#ccc";
         }}
     }};
     
     document.getElementById("uploadForm").onsubmit = function() {{
         uploadBtn.disabled = true;
-        uploadBtn.innerHTML = "⏳ Uploading...";
+        uploadBtn.innerHTML = "⏳ Uploading... Please wait";
         uploadBtn.style.background = "#ffc107";
-        uploadingMsg.style.display = "block";
+        uploadBtn.style.color = "#856404";
         return true;
     }};
     </script>
