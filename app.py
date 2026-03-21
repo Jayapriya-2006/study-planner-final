@@ -215,12 +215,11 @@ def render_login_page(error=""):
         .input-group{{position:relative;margin:20px 0}}
         input{{width:100%;padding:20px 50px 20px 20px;margin:0;border:2px solid #e8ecf4;border-radius:20px;font-size:17px;box-sizing:border-box;transition:all 0.3s;background:rgba(255,255,255,0.9)}}
         input:focus{{border-color:#667eea;outline:none;box-shadow:0 0 20px rgba(102,126,234,0.3);transform:translateY(-2px)}}
-        input:invalid{{border-color:#ef4444}}
         .password-toggle{{position:absolute;right:18px;top:50%;transform:translateY(-50%);cursor:pointer;color:#888;font-size:18px;background:none;border:none;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.3s}}
         .password-toggle:hover{{background:rgba(102,126,234,0.1);color:#667eea}}
         .submit-btn{{width:100%;padding:22px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:25px;font-size:20px;font-weight:700;cursor:pointer;margin:15px 0;transition:all 0.4s;box-shadow:0 15px 35px rgba(102,126,234,0.4)}}
         .submit-btn:hover:not(:disabled){{transform:translateY(-4px);box-shadow:0 25px 50px rgba(102,126,234,0.6)}}
-        .submit-btn:disabled{{background:#ccc;cursor:not-allowed;transform:none}}
+        .submit-btn:disabled{{background:#ccc;opacity:0.6;cursor:not-allowed;transform:none}}
         .error{{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;padding:18px;border-radius:15px;margin:20px 0;font-weight:600;border-left:5px solid #ef4444}}
         .hidden{{display:none !important}}
         .floating-shapes{{position:absolute;width:100%;height:100%;overflow:hidden;z-index:0}}
@@ -253,10 +252,10 @@ def render_login_page(error=""):
                 <input type="email" name="email" placeholder="📧 your-email@gmail.com" required>
             </div>
             <div class="input-group">
-                <input type="password" name="password" id="loginPassword" placeholder="🔐 Enter password" required minlength="6">
+                <input type="password" name="password" id="loginPassword" placeholder="🔐 Enter password (6+ chars)" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">👁️</button>
             </div>
-            <button type="submit" class="submit-btn">🚀 Get Started</button>
+            <button type="submit" class="submit-btn" id="loginSubmit">🚀 Get Started</button>
         </form>
         
         <form method="POST" id="registerForm" class="hidden">
@@ -268,10 +267,10 @@ def render_login_page(error=""):
                 <input type="email" name="email" placeholder="📧 your-email@gmail.com" required>
             </div>
             <div class="input-group">
-                <input type="password" name="password" id="registerPassword" pattern=".{6,}" placeholder="🔐 Create Password (6+ chars)" required title="Password must be at least 6 characters">
+                <input type="password" name="password" id="registerPassword" placeholder="🔐 Create Password (6+ chars)" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">👁️</button>
             </div>
-            <button type="submit" class="submit-btn" form="registerForm">✅ Create Account</button>
+            <button type="submit" class="submit-btn" id="registerSubmit">✅ Create Account</button>
         </form>
     </div>
     
@@ -306,28 +305,24 @@ def render_login_page(error=""):
         }}
     }}
     
-    // Real-time password validation
-    document.getElementById('registerPassword').addEventListener('input', function() {{
-        var submitBtn = document.querySelector('#registerForm .submit-btn');
-        if (this.value.length < 6) {{
-            submitBtn.disabled = true;
-            submitBtn.style.background = '#ccc';
-        }} else {{
-            submitBtn.disabled = false;
-            submitBtn.style.background = '';
-        }}
-    }});
+    // SIMPLE PASSWORD VALIDATION - NO RED BORDERS
+    function checkPasswordLength(inputId, submitId) {{
+        var passwordField = document.getElementById(inputId);
+        var submitBtn = document.getElementById(submitId);
+        
+        passwordField.oninput = function() {{
+            if (this.value.length >= 6) {{
+                submitBtn.disabled = false;
+                submitBtn.style.background = 'linear-gradient(135deg,#667eea,#764ba2)';
+            }} else {{
+                submitBtn.disabled = true;
+                submitBtn.style.background = '#ccc';
+            }}
+        }};
+    }}
     
-    document.getElementById('loginPassword').addEventListener('input', function() {{
-        var submitBtn = document.querySelector('#loginForm .submit-btn');
-        if (this.value.length < 6) {{
-            submitBtn.disabled = true;
-            submitBtn.style.background = '#ccc';
-        }} else {{
-            submitBtn.disabled = false;
-            submitBtn.style.background = '';
-        }}
-    }});
+    checkPasswordLength('loginPassword', 'loginSubmit');
+    checkPasswordLength('registerPassword', 'registerSubmit');
     </script>
 </body>
 </html>'''
