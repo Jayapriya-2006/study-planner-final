@@ -214,7 +214,8 @@ def render_login_page(error=""):
         .password-toggle{{position:absolute;right:18px;top:50%;transform:translateY(-50%);cursor:pointer;color:#888;font-size:18px;background:none;border:none;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.3s}}
         .password-toggle:hover{{background:rgba(102,126,234,0.1);color:#667eea}}
         .submit-btn{{width:100%;padding:22px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:25px;font-size:20px;font-weight:700;cursor:pointer;margin:15px 0;transition:all 0.4s;box-shadow:0 15px 35px rgba(102,126,234,0.4)}}
-        .submit-btn:hover{{transform:translateY(-4px);box-shadow:0 25px 50px rgba(102,126,234,0.6)}}
+        .submit-btn:hover:not(:disabled){{transform:translateY(-4px);box-shadow:0 25px 50px rgba(102,126,234,0.6)}}
+        .submit-btn:disabled{{background:#ccc;opacity:0.6;cursor:not-allowed;transform:none}}
         .error{{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;padding:18px;border-radius:15px;margin:20px 0;font-weight:600;border-left:5px solid #ef4444}}
         .hidden{{display:none !important}}
         .floating-shapes{{position:absolute;width:100%;height:100%;overflow:hidden;z-index:0}}
@@ -247,10 +248,10 @@ def render_login_page(error=""):
                 <input type="email" name="email" placeholder="📧 your-email@gmail.com" required>
             </div>
             <div class="input-group">
-                <input type="password" name="password" id="loginPassword" placeholder="🔐 Enter password" required>
+                <input type="password" name="password" id="loginPassword" placeholder="🔐 Enter password (6+ chars)" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">👁️</button>
             </div>
-            <button type="submit" class="submit-btn">🚀 Get Started</button>
+            <button type="submit" class="submit-btn" id="loginSubmit">🚀 Get Started</button>
         </form>
         
         <form method="POST" id="registerForm" class="hidden">
@@ -265,7 +266,7 @@ def render_login_page(error=""):
                 <input type="password" name="password" id="registerPassword" placeholder="🔐 Create Password (6+ chars)" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">👁️</button>
             </div>
-            <button type="submit" class="submit-btn">✅ Create Account</button>
+            <button type="submit" class="submit-btn" id="registerSubmit">✅ Create Account</button>
         </form>
     </div>
     
@@ -299,6 +300,25 @@ def render_login_page(error=""):
             toggleIcon.textContent = '👁️';
         }}
     }}
+    
+    // SIMPLE PASSWORD VALIDATION - NO RED BORDERS
+    function checkPasswordLength(inputId, submitId) {{
+        var passwordField = document.getElementById(inputId);
+        var submitBtn = document.getElementById(submitId);
+        
+        passwordField.oninput = function() {{
+            if (this.value.length >= 6) {{
+                submitBtn.disabled = false;
+                submitBtn.style.background = 'linear-gradient(135deg,#667eea,#764ba2)';
+            }} else {{
+                submitBtn.disabled = true;
+                submitBtn.style.background = '#ccc';
+            }}
+        }};
+    }}
+    
+    checkPasswordLength('loginPassword', 'loginSubmit');
+    checkPasswordLength('registerPassword', 'registerSubmit');
     </script>
 </body>
 </html>'''
@@ -534,7 +554,7 @@ def sem2():
     .btn{{padding:15px 30px;margin:10px;background:#50c878;color:white;text-decoration:none;border-radius:10px;font-size:18px;display:inline-block}}h1{{font-size:32px;margin-bottom:40px}}</style></head>
     <body><h1>📖 Semester 2</h1>
     <a href="/subject/maths2" class="btn">Maths-2</a>
-    <a href="/subject/physics" class="btn">Physics-2</a>
+    <a href="/subject/computer_architecture" class="btn">computer architecture and Micro Processor</a>
     <a href="/subject/tamil-2" class="btn">Tamil-2</a>
     <a href="/subject/english-2" class="btn">english-2</a>
     <br><a href="/year1" class="btn" style="background:#f39c12">← Back</a>{GLOBAL_ALARM_JS}</body></html>
@@ -865,6 +885,8 @@ def quiz(goal_id):
 # 2nd sem
     elif subject in ['Maths-2', 'math-2', 'mathematics-2']:
          subject = 'maths-2'
+    elif subject in ['computer architecture', 'microprocessor', 'computer architecture and microprocessor']:
+         subject = 'computer_architecture'    
     elif subject in ['tamil-2']:
          subject = 'tamil-2'
     elif subject in ['english-2']:
@@ -968,6 +990,18 @@ def quiz(goal_id):
     {"q": "Cross product result is?", "options": ["Scalar", "Vector", "Number", "Matrix"], "answer": "Vector"},
     {"q": "∂/∂x (x² + y²) = ?", "options": ["2x", "2y", "x+y", "0"], "answer": "2x"},
     {"q": "L'Hospital rule is used for?", "options": ["Integration", "Indeterminate forms", "Matrix", "Trigonometry"], "answer": "Indeterminate forms"}
+],
+        'computer_architecture': [
+    {"q": "CPU stands for?", "options": ["Central Processing Unit", "Computer Processing Unit", "Central Program Unit", "Control Processing Unit"], "answer": "Central Processing Unit"},
+    {"q": "Which is the brain of the computer?", "options": ["RAM", "CPU", "Hard Disk", "Monitor"], "answer": "CPU"},
+    {"q": "ALU is used for?", "options": ["Storage", "Arithmetic & Logic operations", "Input", "Output"], "answer": "Arithmetic & Logic operations"},
+    {"q": "Which memory is volatile?", "options": ["ROM", "RAM", "Hard Disk", "CD"], "answer": "RAM"},
+    {"q": "Which bus carries data?", "options": ["Address bus", "Data bus", "Control bus", "System bus"], "answer": "Data bus"},
+    {"q": "8085 is a?", "options": ["16-bit microprocessor", "8-bit microprocessor", "32-bit microprocessor", "4-bit microprocessor"], "answer": "8-bit microprocessor"},
+    {"q": "Number of pins in 8085?", "options": ["20", "30", "40", "50"], "answer": "40"},
+    {"q": "Which instruction adds two numbers?", "options": ["ADD", "SUB", "MUL", "DIV"], "answer": "ADD"},
+    {"q": "Which flag indicates zero result?", "options": ["Carry", "Zero", "Sign", "Parity"], "answer": "Zero"},
+    {"q": "Which instruction is used to stop program?", "options": ["STOP", "END", "HLT", "EXIT"], "answer": "HLT"}
 ],
          'tamil-2': [
     {"q": "இலக்கியம் என்றால்?", "options": ["விளையாட்டு", "எழுத்து படைப்புகள்", "கணக்கு", "அறிவு"], "answer": "எழுத்து படைப்புகள்"},
