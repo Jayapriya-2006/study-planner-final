@@ -696,8 +696,9 @@ def upload(subject, unit):
     body{{background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI'}}
     .form{{background:rgba(255,255,255,0.1);padding:50px;border-radius:25px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.3)}}
     input[type=file]{{width:100%;padding:15px;margin:20px 0;border-radius:12px;background:#fff}}
-    #uploadBtn{{width:100%;padding:20px;background:#28a745;color:white;border:none;border-radius:15px;font-size:20px;font-weight:600;cursor:pointer;margin-top:10px}}
-    #uploadBtn:disabled{{background:#ccc;color:#666;cursor:not-allowed}}
+    #uploadBtn{{width:100%;padding:20px;background:#28a745;color:white;border:none;border-radius:15px;font-size:20px;font-weight:600;cursor:pointer;margin-top:10px;opacity:0.6}}
+    #uploadBtn:not(:disabled){{opacity:1}}
+    #uploadBtn:disabled{{opacity:0.6;cursor:not-allowed}}
     #filename{{margin:15px 0;padding:15px;background:#ffd700;color:#333;border-radius:12px;font-weight:bold;display:none}}
     </style>
     </head>
@@ -722,20 +723,17 @@ def upload(subject, unit):
             filenameDiv.style.display = "block";
             uploadBtn.disabled = false;
             uploadBtn.innerHTML = "Upload PDF";
-            uploadBtn.style.background = "#28a745";
         }} else {{
             filenameDiv.style.display = "none";
             uploadBtn.disabled = true;
             uploadBtn.innerHTML = "Upload PDF";
-            uploadBtn.style.background = "#ccc";
         }}
     }};
     
     document.getElementById("uploadForm").onsubmit = function() {{
         uploadBtn.disabled = true;
         uploadBtn.innerHTML = "⏳ Uploading... Please wait";
-        uploadBtn.style.background = "#ffc107";
-        uploadBtn.style.color = "#856404";
+        uploadBtn.style.opacity = "1";
         return true;
     }};
     </script>
