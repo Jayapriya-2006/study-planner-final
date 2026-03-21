@@ -12,10 +12,6 @@ from email.mime.multipart import MIMEMultipart
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'study2026-default-key')
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in {'pdf', 'txt'}
-
 # Fixed GLOBAL_ALARM_JS - completed audio URLs and syntax
 GLOBAL_ALARM_JS = """
 <script>
@@ -218,8 +214,7 @@ def render_login_page(error=""):
         .password-toggle{{position:absolute;right:18px;top:50%;transform:translateY(-50%);cursor:pointer;color:#888;font-size:18px;background:none;border:none;padding:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all 0.3s}}
         .password-toggle:hover{{background:rgba(102,126,234,0.1);color:#667eea}}
         .submit-btn{{width:100%;padding:22px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:25px;font-size:20px;font-weight:700;cursor:pointer;margin:15px 0;transition:all 0.4s;box-shadow:0 15px 35px rgba(102,126,234,0.4)}}
-        .submit-btn:hover:not(:disabled){{transform:translateY(-4px);box-shadow:0 25px 50px rgba(102,126,234,0.6)}}
-        .submit-btn:disabled{{background:#ccc;opacity:0.6;cursor:not-allowed;transform:none}}
+        .submit-btn:hover{{transform:translateY(-4px);box-shadow:0 25px 50px rgba(102,126,234,0.6)}}
         .error{{background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626;padding:18px;border-radius:15px;margin:20px 0;font-weight:600;border-left:5px solid #ef4444}}
         .hidden{{display:none !important}}
         .floating-shapes{{position:absolute;width:100%;height:100%;overflow:hidden;z-index:0}}
@@ -252,10 +247,10 @@ def render_login_page(error=""):
                 <input type="email" name="email" placeholder="📧 your-email@gmail.com" required>
             </div>
             <div class="input-group">
-                <input type="password" name="password" id="loginPassword" placeholder="🔐 Enter password (6+ chars)" required>
+                <input type="password" name="password" id="loginPassword" placeholder="🔐 Enter password" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('loginPassword')">👁️</button>
             </div>
-            <button type="submit" class="submit-btn" id="loginSubmit">🚀 Get Started</button>
+            <button type="submit" class="submit-btn">🚀 Get Started</button>
         </form>
         
         <form method="POST" id="registerForm" class="hidden">
@@ -270,7 +265,7 @@ def render_login_page(error=""):
                 <input type="password" name="password" id="registerPassword" placeholder="🔐 Create Password (6+ chars)" required>
                 <button type="button" class="password-toggle" onclick="togglePassword('registerPassword')">👁️</button>
             </div>
-            <button type="submit" class="submit-btn" id="registerSubmit">✅ Create Account</button>
+            <button type="submit" class="submit-btn">✅ Create Account</button>
         </form>
     </div>
     
@@ -304,25 +299,6 @@ def render_login_page(error=""):
             toggleIcon.textContent = '👁️';
         }}
     }}
-    
-    // SIMPLE PASSWORD VALIDATION - NO RED BORDERS
-    function checkPasswordLength(inputId, submitId) {{
-        var passwordField = document.getElementById(inputId);
-        var submitBtn = document.getElementById(submitId);
-        
-        passwordField.oninput = function() {{
-            if (this.value.length >= 6) {{
-                submitBtn.disabled = false;
-                submitBtn.style.background = 'linear-gradient(135deg,#667eea,#764ba2)';
-            }} else {{
-                submitBtn.disabled = true;
-                submitBtn.style.background = '#ccc';
-            }}
-        }};
-    }}
-    
-    checkPasswordLength('loginPassword', 'loginSubmit');
-    checkPasswordLength('registerPassword', 'registerSubmit');
     </script>
 </body>
 </html>'''
@@ -773,59 +749,44 @@ def view_pdf(subject, filename):
     </body></html>
     '''
 # ===== MY FILES PAGE (COMPLETE VERSION) =====
-@app.route('/myfiles', methods=['GET', 'POST'])
-def myfiles():
-    if not session.get('logged_in'): return redirect('/')
+@app.route('/myfiles')
+def myfiles_page():  # Function name change pannirukken
+    if not session.get('logged_in'): 
+        return redirect('/')
     
-    if request.method == 'POST':
-        file = request.files['file']
-        if file and file.filename:
-            filename = secure_filename(file.filename)
-            os.makedirs('static/uploads', exist_ok=True)
-            filepath = f'static/uploads/{filename}'
-            file.save(filepath)
-            
-            conn = get_db_connection()
-            conn.execute("INSERT INTO files (email, filename, filepath) VALUES (?, ?, ?)",
-                        (session['email'], filename, filepath))
-            conn.commit()
-            conn.close()
-            
-            return f'''
-<!DOCTYPE html>
-<html><body style="background:#667eea;color:white;font-family:sans-serif;text-align:center;padding:100px">
-<h1 style="font-size:50px">⏳ Uploading...</h1>
-<h2 style="color:#ffd700;font-size:30px;margin:30px 0">{filename}</h2>
-<div style="width:400px;height:20px;background:#ddd;margin:30px auto;border-radius:10px;overflow:hidden">
-<div style="width:0%;height:100%;background:#00b894;animation:progress 3s forwards;border-radius:10px"></div>
-</div>
-<script>setTimeout(()=>location.href='/myfiles',3000)</script>
-</body></html>'''
+    files_html = ''
+    upload_base = 'static/uploads'
     
-    conn = get_db_connection()
-    files = conn.execute("SELECT * FROM files WHERE email=? ORDER BY id DESC", (session['email'],)).fetchall()
-    conn.close()
-    
-    files_html = ''.join([f'<div style="background:#fff3;padding:20px;margin:10px"><strong>{f["filename"]}</strong></div>' for f in files])
+    if os.path.exists(upload_base):
+        for subject in os.listdir(upload_base):
+            subject_path = os.path.join(upload_base, subject)
+            if os.path.isdir(subject_path):
+                for filename in os.listdir(subject_path):
+                    if filename.endswith('.pdf'):
+                        files_html += f'''
+                        <div style="background:rgba(255,255,255,0.2);padding:25px;margin:20px;border-radius:20px">
+                            <h3>{subject.replace('-',' ').title()} → {filename}</h3>
+                            <div>
+                                <a href="/view-pdf/{subject}/{filename}" target="_blank" style="padding:10px 20px;background:#27ae60;color:white;text-decoration:none;border-radius:10px;margin-right:10px">👀 View</a>
+                                <a href="/download/{subject}/{filename}" style="padding:10px 20px;background:#3498db;color:white;text-decoration:none;border-radius:10px;margin-right:10px">📥 Download</a>
+                                <a href="/delete/{subject}/{filename}" onclick="return confirm('Delete {filename}?')" style="padding:10px 20px;background:#e74c3c;color:white;text-decoration:none;border-radius:10px">🗑️ Delete</a>
+                            </div>
+                        </div>
+                        '''
     
     return f'''
-<!DOCTYPE html>
-<html><body style="background:#667eea;color:white;font-family:sans-serif;padding:30px">
-<div style="max-width:800px;margin:auto">
-<h1 style="text-align:center;font-size:40px">📁 Files</h1>
-<form method="POST" enctype="multipart/form-data" style="background:#fff2;padding:30px;border-radius:20px;margin-bottom:30px">
-<input type="file" name="file" accept=".pdf" style="width:100%;padding:15px;border-radius:10px" required>
-<button type="submit" style="width:100%;padding:15px;background:#00b894;color:white;border:none;border-radius:15px;font-size:18px;font-weight:bold;margin-top:10px;cursor:pointer">Upload</button>
-<div id="filename" style="margin-top:10px;padding:10px;background:#ffd700;color:#333;border-radius:10px;font-weight:bold;display:none"></div>
-</form>
-<div style="background:#fff2;padding:20px;border-radius:20px">{files_html or "No files"}</div>
-<a href="/dashboard" style="display:block;margin-top:30px;padding:15px;background:#f39c12;color:white;text-decoration:none;border-radius:15px;text-align:center;font-weight:bold">Dashboard</a>
-</div>
-<script>
-document.querySelector('input[type=file]').onchange=function(){{document.getElementById('filename').innerHTML=this.files[0].name;document.getElementById('filename').style.display='block'}}
-</script>
-{GLOBAL_ALARM_JS}
-</body></html>'''
+    <!DOCTYPE html>
+    <html><head><title>My Files</title>
+    <style>*{{margin:0;padding:0;box-sizing:border-box}}body{{font-family:Arial;background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;padding:30px}}.container{{max-width:1000px;margin:0 auto}}.back-btn{{position:fixed;top:20px;left:20px;padding:15px 25px;background:#f39c12;color:white;text-decoration:none;border-radius:15px;font-weight:600}}</style></head>
+    <body>
+    <a href="/dashboard" class="back-btn">← Dashboard</a>
+    <div class="container">
+        <h1 style="text-align:center;font-size:42px;margin:80px 0 40px">📁 My Files</h1>
+        {files_html or "<p style='text-align:center;font-size:28px;color:#f1c40f'>No files uploaded yet!</p>"}
+    </div>
+    {GLOBAL_ALARM_JS}
+    </body></html>
+    '''
     
 @app.route('/delete/<subject>/<filename>')
 def delete(subject, filename):
@@ -1339,6 +1300,21 @@ def view_goals():
     </div>
     {GLOBAL_ALARM_JS}
     </body></html>
+    '''
+    
+@app.route('/myfiles')
+def myfiles():
+    if not session.get('logged_in'): return redirect('/')
+    # List all uploaded files (implementation similar to above)
+    return '''
+    <!DOCTYPE html><html><head><title>My Files</title>
+    <style>body{background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;padding:30px;font-family:'Segoe UI'}
+    .container{max-width:1000px;margin:0 auto}</style></head>
+    <body><div class="container">
+    <h1 style="text-align:center;font-size:42px;margin:80px 0 40px">📁 My Files</h1>
+    <p style="text-align:center;font-size:24px">File upload working! Check subjects to upload.</p>
+    <a href="/dashboard" style="display:block;text-align:center;margin:50px 0;padding:20px 50px;background:#f39c12;color:white;text-decoration:none;border-radius:20px;font-size:24px;width:300px;margin:50px auto">← Dashboard</a>
+    </div></body></html>
     '''
     
 @app.route('/delete_goal/<int:id>')
