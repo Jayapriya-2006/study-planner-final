@@ -694,8 +694,9 @@ def upload(subject, unit):
     .form{{background:rgba(255,255,255,0.1);padding:50px;border-radius:25px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.3)}}
     input[type=file]{{width:100%;padding:15px;margin:20px 0;border-radius:12px;background:#fff}}
     button{{width:100%;padding:20px;background:#28a745;color:white;border:none;border-radius:15px;font-size:20px;font-weight:600;cursor:pointer}}
-    #filename{{margin-top:10px;padding:15px;background:#ffd700;color:#333;border-radius:12px;font-weight:bold;display:none;animation:fadeIn 0.5s}}
-    @keyframes fadeIn{{from{{opacity:0;transform:translateY(-10px)}}to{{opacity:1;transform:translateY(0)}}}}
+    #filename{{margin-top:10px;padding:15px;background:#ffd700;color:#333;border-radius:12px;font-weight:bold;display:none}}
+    #uploading{{display:none;margin:20px 0;padding:20px;background:#ffc107;color:#856404;border-radius:15px;font-size:18px;font-weight:bold;text-align:center;animation:pulse 1.5s infinite}}
+    @keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:0.7}}}}
     </style></head>
     <body>
     <div class="form">
@@ -703,48 +704,42 @@ def upload(subject, unit):
         <form method="POST" enctype="multipart/form-data" id="uploadForm">
             <input type="file" name="file" id="fileInput" accept=".pdf" required>
             <div id="filename"></div>
+            <div id="uploading">
+                ⏳ <strong>Uploading...</strong> Please wait
+            </div>
             <button type="submit" id="uploadBtn">Upload PDF</button>
         </form>
         <a href="/subject/{subject}" style="display:inline-block;margin-top:20px;color:#f1c40f;font-size:18px">← Back to {subject.replace('-', ' ').title()}</a>
     </div>
     <script>
-    // File select pannum pothu filename kaatanum
-    document.getElementById('fileInput').onchange = function() {{
+    // File select pannum pothu filename show
+    document.getElementById('fileInput').onchange = function() {
         const fileName = this.files[0]?.name || '';
         const filenameDiv = document.getElementById('filename');
-        if (fileName) {{
-            filenameDiv.innerHTML = `📄 Selected: <strong>${{fileName}}</strong>`;
+        if (fileName) {
+            filenameDiv.innerHTML = `📄 Selected: <strong>${fileName}</strong>`;
             filenameDiv.style.display = 'block';
-        }} else {{
+        } else {
             filenameDiv.style.display = 'none';
-        }}
-    }};
+        }
+    };
 
-    // Form submit pannum pothu uploading progress kaatanum
-    document.getElementById('uploadForm').onsubmit = function() {{
-        const fileInput = document.getElementById('fileInput');
+    // Upload click pannum pothu "Uploading..." show
+    document.getElementById('uploadForm').onsubmit = function() {
         const uploadBtn = document.getElementById('uploadBtn');
-        const filenameDiv = document.getElementById('filename');
+        const uploadingDiv = document.getElementById('uploading');
         
-        if (fileInput.files[0]) {{
-            // Button disable pannanum
-            uploadBtn.disabled = true;
-            uploadBtn.innerHTML = '⏳ Uploading...';
-            uploadBtn.style.background = '#ffc107';
-            
-            // Progress animation kaatanum
-            filenameDiv.innerHTML = `
-                <div style="text-align:center">
-                    <h3 style="color:#ffd700">⏳ Uploading <strong>${{fileInput.files[0].name}}</strong></h3>
-                    <div style="width:100%;height:8px;background:#ddd;margin:15px 0;border-radius:10px;overflow:hidden">
-                        <div style="width:0%;height:100%;background:linear-gradient(90deg,#28a745,#00b894);animation:progress 3s ease-in-out;border-radius:10px"></div>
-                    </div>
-                    <p style="color:#f1c40f;font-size:14px">Please wait, this may take a few seconds...</p>
-                </div>
-            `;
-        }}
-        return true; // Form submit continue pannanum
-    }};
+        // Button change pannanum
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '⏳ Uploading...';
+        uploadBtn.style.background = '#ffc107';
+        uploadBtn.style.color = '#856404';
+        
+        // Uploading text show pannanum
+        uploadingDiv.style.display = 'block';
+        
+        return true;
+    };
     </script>
     {GLOBAL_ALARM_JS}
     </body></html>
