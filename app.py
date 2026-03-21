@@ -681,69 +681,27 @@ def upload(subject, unit):
             filename = f"unit{unit}.pdf"
             os.makedirs(f'static/uploads/{subject}', exist_ok=True)
             file.save(f'static/uploads/{subject}/{filename}')
-            return f'''
-            <h1 style="text-align:center;font-size:50px;color:#28a745;margin-top:100px">✅ Unit {unit} Uploaded!</h1>
-            <script>setTimeout(()=>location.href="/subject/{subject}", 1500)</script>
-            '''
+            return f'<meta http-equiv="refresh" content="1;url=/subject/{subject}">✅ Uploaded!'
     
     return f'''
-    <!DOCTYPE html>
-    <html><head><title>Upload Unit {unit}</title>
-    <style>
-    body{{background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI'}}
-    .form{{background:rgba(255,255,255,0.1);padding:50px;border-radius:25px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.3)}}
-    input[type=file]{{width:100%;padding:15px;margin:20px 0;border-radius:12px;background:#fff}}
-    button{{width:100%;padding:20px;background:#28a745;color:white;border:none;border-radius:15px;font-size:20px;font-weight:600;cursor:pointer}}
-    #filename{{margin-top:10px;padding:15px;background:#ffd700;color:#333;border-radius:12px;font-weight:bold;display:none}}
-    #uploading{{display:none;margin:20px 0;padding:20px;background:#ffc107;color:#856404;border-radius:15px;font-size:18px;font-weight:bold;text-align:center;animation:pulse 1.5s infinite}}
-    @keyframes pulse{{0%,100%{{opacity:1}}50%{{opacity:0.7}}}}
-    </style></head>
-    <body>
-    <div class="form">
-        <h1 style="font-size:40px;margin-bottom:30px">📤 Upload Unit {unit}</h1>
-        <form method="POST" enctype="multipart/form-data" id="uploadForm">
-            <input type="file" name="file" id="fileInput" accept=".pdf" required>
-            <div id="filename"></div>
-            <div id="uploading">
-                ⏳ <strong>Uploading...</strong> Please wait
-            </div>
-            <button type="submit" id="uploadBtn">Upload PDF</button>
-        </form>
-        <a href="/subject/{subject}" style="display:inline-block;margin-top:20px;color:#f1c40f;font-size:18px">← Back to {subject.replace('-', ' ').title()}</a>
-    </div>
-    <script>
-    // File select pannum pothu filename show
-    document.getElementById('fileInput').onchange = function() {
-        const fileName = this.files[0]?.name || '';
-        const filenameDiv = document.getElementById('filename');
-        if (fileName) {
-            filenameDiv.innerHTML = `📄 Selected: <strong>${fileName}</strong>`;
-            filenameDiv.style.display = 'block';
-        } else {
-            filenameDiv.style.display = 'none';
-        }
-    };
-
-    // Upload click pannum pothu "Uploading..." show
-    document.getElementById('uploadForm').onsubmit = function() {
-        const uploadBtn = document.getElementById('uploadBtn');
-        const uploadingDiv = document.getElementById('uploading');
-        
-        // Button change pannanum
-        uploadBtn.disabled = true;
-        uploadBtn.innerHTML = '⏳ Uploading...';
-        uploadBtn.style.background = '#ffc107';
-        uploadBtn.style.color = '#856404';
-        
-        // Uploading text show pannanum
-        uploadingDiv.style.display = 'block';
-        
-        return true;
-    };
-    </script>
-    {GLOBAL_ALARM_JS}
-    </body></html>
-    '''
+<!DOCTYPE html>
+<html><head><title>Upload Unit {unit}</title>
+<style>body{{background:linear-gradient(135deg,#667eea,#764ba2);color:white;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:'Segoe UI'}}
+.form{{background:rgba(255,255,255,0.1);padding:50px;border-radius:25px;text-align:center;box-shadow:0 20px 40px rgba(0,0,0,0.3)}}
+input[type=file]{{width:100%;padding:15px;margin:20px 0;border-radius:12px;background:#fff}}
+button{{width:100%;padding:20px;background:#28a745;color:white;border:none;border-radius:15px;font-size:20px;font-weight:600;cursor:pointer}}</style></head>
+<body>
+<div class="form">
+<h1 style="font-size:40px;margin-bottom:30px">📤 Upload Unit {unit}</h1>
+<form method="POST" enctype="multipart/form-data">
+<input type="file" name="file" accept=".pdf" required onchange="if(this.files[0])document.getElementById(\'filename\').innerHTML=\'📄 \'+this.files[0].name+\' selected\';document.getElementById(\'filename\').style.display=\'block\'">
+<div id="filename" style="margin:10px;padding:15px;background:#ffd700;color:#333;border-radius:12px;font-weight:bold;display:none"></div>
+<button type="submit" onclick="this.innerHTML=\'⏳ Uploading...\';this.disabled=true;return true" style="background:#ffc107;color:#856404">⏳ Uploading...</button>
+</form>
+<a href="/subject/{subject}" style="color:#f1c40f">← Back</a>
+</div>
+</body></html>
+'''
     
 @app.route('/view-pdf/<subject>/<filename>')
 def view_pdf(subject, filename):
