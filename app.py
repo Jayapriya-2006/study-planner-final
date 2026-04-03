@@ -877,6 +877,8 @@ def quiz(goal_id):
     subject = goal['subject'].strip().lower()
     if subject in ['maths', 'math', 'mathematics']:
          subject = 'mathematics'
+    elif subject in ['python','Python']:
+         sunject = 'python'
     elif subject in ['tamil', 'tamil-1', 'tamil1']:
          subject = 'tamil-1'
     elif subject in ['english', 'english-1', 'eng1']:
